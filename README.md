@@ -56,7 +56,8 @@ mkdir -p /lambda_layer/python/lib/python3.8/site-packages/
 #这些命令会将numpy和Pillow库及其所有依赖项安装到/lambda_layer/python/lib/python3.8/site-packages/目录
 pip install numpy -t /lambda_layer/python/lib/python3.8/site-packages/
 pip install Pillow -t /lambda_layer/python/lib/python3.8/site-packages/
-
+pip install boto3 -t /lambda_layer/python/lib/python3.8/site-packages/
+pip install scipy -t /lambda_layer/python/lib/python3.8/site-packages/
 
 # 退出Docker容器
 exit
@@ -69,6 +70,7 @@ exit
 ```bash
 cd lambda_layer_numpy_pillow
 zip -r9 lambda_layer.zip python
+zip -r9 lambda_layer2.zip python
 ```
 
 3. **上传和配置 Layer**：
