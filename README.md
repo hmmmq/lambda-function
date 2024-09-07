@@ -71,6 +71,7 @@ exit
 cd lambda_layer_numpy_pillow
 zip -r9 lambda_layer.zip python
 zip -r9 lambda_layer2.zip python
+zip -r9 lambda_layer3.zip python
 ```
 
 3. **上传和配置 Layer**：
