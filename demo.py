@@ -1,70 +1,97 @@
 import numpy as np
+from scipy.ndimage import generic_filter
 from PIL import Image
-import json
-import base64
 import io
+import base64
 
-def image_from_base64(base64_str):
-    image_data = base64.b64decode(base64_str)
-    image = Image.open(io.BytesIO(image_data))
-    return np.array(image)
+def arithmetical_mean_height(surface):
+    """Calculate the arithmetical mean height (Sa)."""
+    Sa = np.mean(np.abs(surface))
+    return Sa
 
-def custom_filter(image_array, filter_size, filter_func):
-    padded_image = np.pad(image_array, pad_width=filter_size//2, mode='reflect')
-    filtered_image = np.zeros_like(image_array)
-    
-    for i in range(image_array.shape[0]):
-        for j in range(image_array.shape[1]):
-            region = padded_image[i:i+filter_size, j:j+filter_size]
-            filtered_image[i, j] = filter_func(region)
-    
-    return filtered_image
+def root_mean_square_height(surface):
+    """Calculate the root mean square height (Sq)."""
+    Sq = np.sqrt(np.mean(surface**2))
+    return Sq
+
+def maximum_height(surface):
+    """Calculate the maximum height (Sz)."""
+    Sz = np.max(surface) - np.min(surface)
+    return Sz
+
+def skewness(surface):
+    """Calculate the skewness (Ssk)."""
+    Sa = arithmetical_mean_height(surface)
+    Sq = root_mean_square_height(surface)
+    Ssk = np.mean((surface - Sa)**3) / (Sq**3)
+    return Ssk
+
+def kurtosis(surface):
+    """Calculate the kurtosis (Sku)."""
+    Sq = root_mean_square_height(surface)
+    Sku = np.mean(surface**4) / (Sq**4)
+    return Sku
+
+def maximum_peak_height(surface):
+    """Calculate the maximum peak height (Sp)."""
+    Sp = np.max(surface)
+    return Sp
+
+def maximum_pit_height(surface):
+    """Calculate the maximum pit height (Sv)."""
+    Sv = np.min(surface)
+    return Sv
+
+def auto_correlation_length(surface):
+    """Calculate the auto-correlation length (Sal)."""
+    def correlation_function(window):
+        # Calculate mean and standard deviation for the window
+        mean_x = np.mean(window)
+        std_x = np.std(window)
+
+        # Calculate auto-correlation (normalized covariance)
+        auto_corr = np.mean((window - mean_x) * (window - mean_x)) / (std_x * std_x)
+        return auto_corr
+
+    def calculate_sal(surface):
+        # Apply the generic filter with the correlation function
+        return generic_filter(surface, correlation_function, size=3)
+
+    Sal = calculate_sal(surface)
+    return np.mean(Sal)
 
 def lambda_handler(event, context):
-    print("Received event: " + json.dumps(event, indent=2))
-    
-    try:
-        image_array = image_from_base64(event['image_data'])
-        
-        # Example filter function: mean filter
-        def mean_filter(region):
-            return np.mean(region)
-        
-        filter_size = 3  # Example filter size
-        filtered_image = custom_filter(image_array, filter_size, mean_filter)
-        
-        # Calculate surface texture parameters
-        Sa = np.mean(np.abs(filtered_image))
-        Sq = np.sqrt(np.mean(filtered_image**2))
-        Sz = np.max(filtered_image) - np.min(filtered_image)
-        Ssk = np.mean((filtered_image - Sa)**3) / (Sq**3)
-        Sku = np.mean((filtered_image - Sa)**4) / (Sq**4)
-        Sp = np.max(filtered_image)
-        Sv = np.min(filtered_image)
-        Sal = np.mean(np.abs(np.diff(filtered_image, axis=0))) + np.mean(np.abs(np.diff(filtered_image, axis=1)))
-        
-        response = {
-            'statusCode': 200,
-            'body': json.dumps({
-                'processor': 'custom_filter',
-                'image_format': 'numpy_array',
-                'dimensions': image_array.shape,
-                'Sa': Sa,
-                'Sq': Sq,
-                'Sz': Sz,
-                'Ssk': Ssk,
-                'Sku': Sku,
-                'Sp': Sp,
-                'Sv': Sv,
-                'Sal': Sal
-            })
+    # Assume the image is passed as a base64-encoded string in the event
+    base64_image = event['body']
+
+    # Decode the base64 string to bytes
+    image_data = base64.b64decode(base64_image)
+    image = Image.open(io.BytesIO(image_data))
+
+    # Convert the image to grayscale (if not already) and to a NumPy array
+    surface = np.array(image.convert('L'))
+
+    # Calculate surface texture parameters
+    Sa = arithmetical_mean_height(surface).item()  # Convert to Python float
+    Sq = root_mean_square_height(surface).item()
+    Sz = maximum_height(surface).item()
+    Ssk = skewness(surface).item()
+    Sku = kurtosis(surface).item()
+    Sp = maximum_peak_height(surface).item()
+    Sv = maximum_pit_height(surface).item()
+    Sal = auto_correlation_length(surface).item()
+
+    # Return results
+    return {
+        "statusCode": 200,
+        "body": {
+            "Arithmetical Mean Height (Sa)": Sa,
+            "Root Mean Square Height (Sq)": Sq,
+            "Maximum Height (Sz)": Sz,
+            "Skewness (Ssk)": Ssk,
+            "Kurtosis (Sku)": Sku,
+            "Maximum Peak Height (Sp)": Sp,
+            "Maximum Pit Height (Sv)": Sv,
+            "Auto-Correlation Length (Sal)": Sal
         }
-        
-        return response
-    
-    except Exception as e:
-        print(e)
-        return {
-            'statusCode': 500,
-            'body': json.dumps('Error processing image')
-        }
+    }
