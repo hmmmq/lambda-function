@@ -2,9 +2,10 @@ import json
 import pandas as pd
 import subprocess
 import os
+from tqdm import tqdm
 
 # 获取当前目录下 image 文件夹中的所有 .tiff 文件名
-image_folder = "images"
+image_folder = "demo_images"
 file_list = [f for f in os.listdir(image_folder) if f.endswith('.tiff')]
 print(file_list)
 
@@ -12,7 +13,7 @@ print(file_list)
 results = []
 
 # 遍历文件列表，发送请求并收集结果
-for file_name in file_list:
+for file_name in tqdm(file_list, desc="Processing files"):
     print(f"Processing {file_name}...")
     file_path = os.path.join(image_folder, file_name)
     print(file_path)
