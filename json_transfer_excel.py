@@ -5,7 +5,7 @@ import os
 from tqdm import tqdm
 
 # 获取当前目录下 image 文件夹中的所有 .tiff 文件名
-image_folder = "demo_images"
+image_folder = "images"
 file_list = [f for f in os.listdir(image_folder) if f.endswith('.tiff')]
 print(file_list)
 
@@ -14,9 +14,9 @@ results = []
 
 # 遍历文件列表，发送请求并收集结果
 for file_name in tqdm(file_list, desc="Processing files"):
-    print(f"Processing {file_name}...")
+    print(f"\nProcessing {file_name}...")
     file_path = os.path.join(image_folder, file_name)
-    print(file_path)
+    print(f"File path {file_path}")
     result = subprocess.run(
         [
             "curl", "-s", "-X", "POST", 
@@ -27,14 +27,13 @@ for file_name in tqdm(file_list, desc="Processing files"):
         capture_output=True,
         text=True
     )
-    print(result.stdout)
      # 解析 JSON 字符串
     data = json.loads(result.stdout)
      # 添加新的属性 image_name
     data["image_name"] = file_name
     # 将结果添加到列表中
     results.append(data)
-    print(data)
+    print(f"\nComplete process {file_name}, result:\n {data}\n ")
 
 # 将所有结果转换为 JSON 字符串
 json_str = json.dumps(results)
