@@ -95,4 +95,4 @@ https://hybb2dhals4gioq2q7xecpdhte0hesrl.lambda-url.us-east-1.on.aws/
 
 curl -s -X POST https://hybb2dhals4gioq2q7xecpdhte0hesrl.lambda-url.us-east-1.on.aws/ -H "Content-Type: image/tiff" --data-binary "@aniso_dir_030_02.tiff"
 
-{"processor": "proc1", "format": "TIFF", "size": "(256, 256)", "mean": "131.62152099609375"}%
+{"Kurtosis (Sku)":0.006364826866159109,"Maximum Peak Height (Sp)":255,"Maximum Pit Height (Sv)":0,"Auto-Correlation Length (Sal)":0.758331298828125,"Arithmetical Mean Height (Sa)":131.62152099609375,"Maximum Height (Sz)":255,"Skewness (Ssk)":2.02(ba(ba(base)(ba(base)
